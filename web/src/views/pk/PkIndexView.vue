@@ -1,20 +1,16 @@
 <template>
-    <ContenFiled>
-        对战
-    </ContenFiled>
-
-    
+    <PlayGround />
 </template>
 
 <script>
-import ContenFiled from '../../components/ContentFiled.vue'
-export default{
-    components:{
-        ContenFiled
+import PlayGround from '../../components/PlayGround.vue'
+
+export default {
+    components: {
+        PlayGround
     }
 }
 </script>
 
 <style scoped>
-
 </style>
