@@ -35,8 +35,8 @@ div.gamemap{
     width: 100%;;
     height: 100%;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center;   /*水平居中*/
+    align-items: center;       /*竖直居中*/
 }
 </style>
 
