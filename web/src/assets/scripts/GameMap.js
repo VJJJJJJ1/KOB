@@ -1,5 +1,6 @@
 //每一文件只能有一个default，如果不是default的画就加大括号
 import { GameObject } from "./GameObject"; 
+import { Snake } from "./Snake";
 import { Wall } from "./Wall";
 
 export class GameMap extends GameObject{
@@ -12,16 +13,22 @@ export class GameMap extends GameObject{
         this.L = 0;   //一个单位的长度，整个地图为13*13
 
         this.rows = 13;
-        this.cols = 13;
+        this.cols = 14;
 
         this.walls = [];
 
         //假设这个正方形内有20个障碍物
-        this.inner_walls_count = 50;
+        this.inner_walls_count = 20;
+
+
+        this.snakes = [
+            new Snake({id: 0, color: "#4876EC", r: this.rows - 2, c: 1}, this),
+            new Snake({id: 1, color: "#F94848", r: 1, c: this.cols - 2}, this),
+        ];
     }
 
     //输入起点和终点坐标，判断是否联通
-    //这里使用泛洪法
+    //这里使用Flood fill算法
     check_connnected(g, sx, sy, tx, ty){
         if(sx == tx && sy == ty) return true;
         //(sx, sy)标记为true,再继续前进
@@ -60,11 +67,12 @@ export class GameMap extends GameObject{
             for(let j = 0; j < 1000; j ++){ 
                 let r = parseInt(Math.random() * this.rows);  //先乘再取int
                 let c = parseInt(Math.random() * this.cols);
-                if(g[r][c] || g[c][r]) continue;
+                //中心对称
+                if(g[r][c] || g[this.rows - 1 - r][this.cols - 1 - c]) continue;
                 if(r == this.rows - 2 && c == 1 || r == 1 && c == this.cols - 2)
                     continue;   //左下和右上不能有障碍物
 
-                g[r][c] = g[c][r] = true;  //注意地图是轴对称
+                g[r][c] = g[this.rows - 1 - r][this.cols - 1 - c] = true;  //注意地图是中心对称
                 break;
             }
         }
@@ -92,6 +100,24 @@ export class GameMap extends GameObject{
     }
 
 
+    add_listening_events(){
+        this.ctx.canvas.focus();
+
+        const [snake0, snake1] = this.snakes;
+        this.ctx.canvas.addEventListener("keydown", e =>{
+            if (e.key === 'w') snake0.set_direction(0);
+            else if (e.key === 'd') snake0.set_direction(1);
+            else if (e.key === 's') snake0.set_direction(2);
+            else if (e.key === 'a') snake0.set_direction(3);
+            else if (e.key === 'ArrowUp') snake1.set_direction(0);
+            else if (e.key === 'ArrowRight') snake1.set_direction(1);
+            else if (e.key === 'ArrowDown') snake1.set_direction(2);
+            else if (e.key === 'ArrowLeft') snake1.set_direction(3);
+
+        });
+    }
+
+
     start(){
         //随机循环1000次，如果创建的地图是连通的，就退出
         for(let i = 0; i < 1000; i ++){
@@ -99,6 +125,7 @@ export class GameMap extends GameObject{
                 break;
             }
         }
+        this.add_listening_events();
     }
     update_size(){
         //防止出现墙之间有缝隙的问题，将L取整（原本是浮点数）
@@ -107,8 +134,48 @@ export class GameMap extends GameObject{
         this.ctx.canvas.height = this.L * this.rows;
     }
 
+    check_ready(){   //判断两条蛇是否都准备好下一回合了
+        for(const snake of this.snakes){
+            if(snake.status !== "idle") return false;
+            if(snake.direction === -1) return false;
+        }
+        return true;
+    }
+
+    next_step(){
+        for(const snake of this.snakes){
+            snake.next_step();
+        }
+    }
+
+    // 检测目标位置是否合法：没有撞到两条蛇的身体和障碍物
+    check_valid(cell){
+        for(const wall of this.walls){
+            if(wall.r === cell.r && wall.c === cell.c){
+                return false;
+            }
+        }
+        for(const snake of this.snakes){
+            let k = snake.cells.length;
+            if(!snake.check_tail_increasing()){ // 当蛇尾会前进的时候，蛇尾不要判断
+                k --;
+            }
+            for(let i = 0; i < k; i ++){
+                if(snake.cells[i].r === cell.r && snake.cells[i].c === cell.c){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
+
     update(){
         this.update_size();
+        if(this.check_ready()){
+            this.next_step();
+        }
         this.render();
     }
     render(){    //每一帧都需要渲染，即把当前游戏对象画到地图上
@@ -117,7 +184,7 @@ export class GameMap extends GameObject{
         // 定义奇数格和偶数格的颜色（横纵坐标相加），用QQ开截图，ctrl+shift+c即可复制当前所指颜色色号
         const color_even = "#AAD751", color_odd = "#A2D149"; 
         for(let r = 0; r < this.rows; r ++){
-            for(let c = 0; c <this.cols; c ++){
+            for(let c = 0; c < this.cols; c ++){
                 if((r + c) % 2 == 0){
                     //填充颜色
                     this.ctx.fillStyle = color_even;  
@@ -132,3 +199,4 @@ export class GameMap extends GameObject{
         }
     }
 }
+

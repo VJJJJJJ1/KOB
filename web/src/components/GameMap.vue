@@ -1,7 +1,7 @@
 <template>
     <!-- 让下面函数返回的parent和canvas与html部分产生关联 -->
     <div ref = "parent" class = "gamemap">   
-        <canvas ref = "canvas"></canvas>
+        <canvas ref = "canvas" tabindex="0"></canvas>
     </div>
 </template>
 

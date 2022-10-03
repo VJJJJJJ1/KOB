@@ -24,7 +24,7 @@ export class GameObject{
 
         for(let i in GAME_OBJECTS){
             const obj = GAME_OBJECTS[i];
-            if(this == obj){
+            if(this === obj){
                 GAME_OBJECTS.splice(i);  //删除数组元素
                 break;
             }
